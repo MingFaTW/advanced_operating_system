@@ -1,0 +1,364 @@
+\documentclass[10pt, answers]{exam} 
+%\documentclass[12pt, addpoints, answers]{exam} 
+%\addpoints
+%\noaddpoints
+%\answers
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{listings}
+%\lstset
+%{ %Formatting for code in appendix
+%    language=c,
+%    basicstyle=\footnotesize,
+%    numbers=left,
+%    stepnumber=1,
+%    showstringspaces=false,
+%    tabsize=1,
+%    breaklines=true,
+%    breakatwhitespace=false,
+%}
+
+\usepackage{courier}
+\lstset{
+    language=C,
+    basicstyle=\footnotesize,
+    numbers=left,
+    stepnumber=1,
+%    showstringspaces=false,
+%    tabsize=1,
+%   breaklines=true,
+    breakatwhitespace=false,    
+%    basicstyle=\footnotesize\ttfamily, % Default font
+    % numbers=left,              % Location of line numbers
+    numberstyle=\tiny,          % Style of line numbers
+    % stepnumber=2,              % Margin between line numbers
+    numbersep=5pt,              % Margin between line numbers and text
+%    tabsize=2,                  % Size of tabs
+    extendedchars=true,
+    breaklines=true,            % Lines will be wrapped
+%    keywordstyle=\color{red},
+    frame=b,
+    % keywordstyle=[1]\textbf,
+    % keywordstyle=[2]\textbf,
+    % keywordstyle=[3]\textbf,
+    % keywordstyle=[4]\textbf,   \sqrt{\sqrt{}}
+%    stringstyle=\color{white}\ttfamily, % Color of strings
+    stringstyle=\ttfamily, % Color of strings
+    showspaces=false,
+    showtabs=false,
+    xleftmargin=17pt,
+    framexleftmargin=17pt,
+    framexrightmargin=5pt,
+    framexbottommargin=4pt,
+    % backgroundcolor=\color{lightgray},
+    showstringspaces=true
+}
+%%%\lstloadlanguages{ % Check documentation for further languages ...
+%%%     % [Visual]Basic,
+%%%     % Pascal,
+%%%     C,
+%%%     C++,
+%%%     % XML,
+%%%     % HTML,
+%%%     Java
+%%%}
+% \DeclareCaptionFont{blue}{\color{blue}} 
+
+% \captionsetup[lstlisting]{singlelinecheck=false, labelfont={blue}, textfont={blue}}
+\usepackage{caption}
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox[cmyk]{0.43, 0.35, 0.35,0.01}{\parbox{\textwidth}{\hspace{15pt}#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white, singlelinecheck=false, margin=0pt, font={bf,footnotesize}}
+
+
+
+
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{multirow}
+
+
+\newcommand{\coursename}{Advanced Operating Systems}
+\newcommand{\semester}{Fall 2024}
+\newcommand{\hwtitle}{HW\#1}
+\newcommand{\studentname}{Lee Ming Fa}
+\newcommand{\studentID}{CBB110213}
+
+\newcommand{\answer}{\\~\textbf{Answer:}\space}
+
+\pagestyle{head} 
+\pagestyle{headandfoot}
+\extraheadheight{1in}
+\firstpageheader{}
+{\begin{large}\hwtitle \\
+\coursename, \semester\end{large}\\~\\
+\studentname\space(\studentID)\\
+Department of Computer Science and Information Engineering\\
+National Pingtung University}
+{}
+%\runningheadrule 
+%\runningheader{}{}{}
+\setlength\answerlinelength{2in}
+\unframedsolutions
+
+\begin{document}
+%\noindent This homework is from Chapter 5 of OSTEP.
+
+\begin{questions} 
+\setcounter{question}{0} 
+
+%/ question1
+\question 
+Write a program that calls fork(). Before calling fork(), have the main process access a variable (e.g., x) and set its value to something (e.g., 100). What value is the variable in the child process? What happens to the variable when both the child and parent change the value of x?
+
+\begin{solution}
+Please refer to List ~\ref{code-q1.c} (q1.c):
+
+\lstinputlisting[label=code-q1.c, caption=q1.c]{q1.c}
+
+Its execution results are as follows:
+
+\begin{lstlisting}[language=bash]
+$ cc q1.c
+$ ./a.out 
+hello, I am parent of 10963 (pid:10962)
+x was 100, but I have changed it to 111...
+Now, x is 111!
+hello, I am child (pid:10963)
+x was 100, but I have changed it to 222...
+Now, x is 222!
+$
+\end{lstlisting}
+
+As we can see in Line 8 of Listing~\ref{code-q1.c}, we have declared a variable $x$ with a value of 100. Lines 14-20 and 22-28 show the code for the child process and the parent process, respectively. In Lines 17 and 25, we print out the value of x for the child and the parent process, which both are 100 (as shown in lines 4 and 7 of the execution results). It is because the child process is created with the same content as the parent -- including the data segment as well as the stack. Later, in Lines 18 and 26, we changed the values of x in the child and the parent to 222 and 111, respectively. We also print out the changed values in Lines 20 and 28, which are 222 and 111. This shows that the forked child process has the same contents as its parent when it was created. However, after that, the child and the parent are two independent processes.
+
+
+
+\end{solution}
+
+%/ question2
+\question
+Write a program that opens a file (with the open() system call) and then calls fork() to create a new process. Can both the child and parent access the file descriptor returned by open()? What happens when they are writing to the file concurrently, i.e., at the same time?
+
+\begin{solution}
+
+Consider the following program:\\
+
+\lstinputlisting[label=code-q2.c, caption=q2.c]{q2.c}
+
+Its execution results are as follows:
+
+\begin{lstlisting}[language=bash]
+$ cc q2.c
+$ ./a.out 
+Parent wrote to file.
+Child wrote to file.
+$
+\end{lstlisting}
+
+The output.txt content:
+
+\begin{lstlisting}
+Hello from parent!
+Hello from child!
+\end{lstlisting}
+
+
+As shown in Listing~\ref{code-q2.c}, the program's main idea is to create a parent and child process to write messages into a file named \texttt{output.txt}.
+In Line 10, the \texttt{open()} function is used to open or create the file \texttt{output.txt}. The flags \texttt{O\_CREAT} indicate that the file should be created if it does not already exist, \texttt{O\_WRONLY} opens the file in write-only mode, and \texttt{O\_TRUNC} clears the contents of the file if it already exists. The permission mode \texttt{0644} allows the owner to read and write the file, while others can only read it.
+Lines 17-20 handle error messages. If \texttt{fork()} fails, the program will display an error message and exit.
+Lines 20-24 represent the child process segment, which writes a message to the file and prints a success message.
+Lines 24-29 represent the parent process segment, which functions similarly to the child process. It writes a message to the file and prints a success message as well.
+As we can see in \texttt{output.txt}, the messages are written successfully.
+
+
+\end{solution}
+
+%/ question3
+\question{Write a program that calls fork(). Before calling fork(), have the main process access a variable (e.g., x) and set its value to something (e.g., 100). What value is the variable in the child process? What happens to the variable when both the child and parent change the value of x?}
+\\
+\begin{solution}
+
+\lstinputlisting[label=code-q3.c, caption=q3.c]{q3.c}
+
+Its execution results are as follows:
+
+\begin{lstlisting}[language=bash]
+$ cc q3.c
+$ ./a.out
+hello
+goodbye
+$
+\end{lstlisting}
+
+As we can see in Line 7 of the code, we use pipe() to create a pipeline for inter-process communication, where pipefd[0] is the read end and pipefd[1] is the write end of the pipe. In Line 8, we call fork() to create a child process.
+
+Lines 12-16 handle the child process. In Line 13, the child prints "hello", and in Line 14, it writes "finished" to the pipe using write(pipefd[1], "finished", 8), which sends the message to the parent process through the pipe. The child then closes the write end of the pipe in Line 15.
+
+Lines 16-20 deal with the parent process. In Line 18, the parent waits for messege from the child by calling read(pipefd[0], buffer, 8), which blocks until the child sends its message. After receiving the message, the parent prints "goodbye" in Line 19, representing the message was received.
+
+From upon example, we can know how the parent and child process switch the process by "finished" message. : )~
+
+\end{solution}
+
+%/ question4
+\question
+Write a program that calls fork() and then calls some form of exec() to run the program /bin/ls. See if you can try all of the variants of exec(), including (on Linux) execl(), execle(), execlp(), execv(), execvp(), and execvpe(). Why do you think there are so many variants of the same basic call?
+
+\begin{solution}
+
+\lstinputlisting[label=code-q4.c, caption=q4.c]{q4.c}
+
+Its execution results are as follows:
+
+\begin{lstlisting}[language=bash]
+$ cc q4.c
+$ ./a.out
+Child process is going to run /bin/ls
+Running execl
+Running execle
+Running execlp
+Running execv
+Running execvp
+a.out           q1.c            q3.c            q3_explain.c    q4.c                                                    
+a.out           q1.c            q3.c            q3_explain.c    q4.c
+total 104
+total 104
+total 104
+-rwxr-xr-x  1 limingfa  staff  33488 10  1 15:31 a.out
+-rw-r--r--@ 1 limingfa  staff    811  3 10  2022 q1.c
+-rw-r--r--@ 1 limingfa  staff    487 10  1 14:39 q3.c
+-rw-r--r--  1 limingfa  staff    854 10  1 14:01 q3_explain.c
+-rw-r--r--  1 limingfa  staff   1179 10  1 15:28 q4.c
+-rwxr-xr-x  1 limingfa  staff  33488 10  1 15:31 a.out
+-rw-r--r--@ 1 limingfa  staff    811  3 10  2022 q1.c
+-rwxr-xr-x  1 limingfa  staff  33488 10  1 15:31 a.out
+-rw-r--r--@ 1 limingfa  staff    487 10  1 14:39 q3.c
+-rw-r--r--  1 limingfa  staff    854 10  1 14:01 q3_explain.c
+-rw-r--r--@ 1 limingfa  staff    811  3 10  2022 q1.c
+-rw-r--r--  1 limingfa  staff   1179 10  1 15:28 q4.c
+-rw-r--r--@ 1 limingfa  staff    487 10  1 14:39 q3.c
+-rw-r--r--  1 limingfa  staff    854 10  1 14:01 q3_explain.c
+-rw-r--r--  1 limingfa  staff   1179 10  1 15:28 q4.c
+\end{lstlisting}
+
+As we can see from the example, there are many different styles of \texttt{exec}. I think the basic functions are:
+
+\begin{itemize}
+    \item \textbf{Parameter Transfer:} Some functions, like \texttt{execl()} and \texttt{execle()}, allow you to directly list parameters, which is suitable for a small number of known parameters. Others, like \texttt{execv()} and \texttt{execvp()}, use an array, making it easier to handle an uncertain number of parameters.
+    
+    \item \textbf{Control of Environment Variables:} Functions such as \texttt{execle()} and \texttt{execvpe()} allow you to set environment variables, which is really useful when you need to change the environment during execution.
+    
+    \item \textbf{Path Searching:} Functions like \texttt{execvp()} and \texttt{execvpe()} can automatically search for executable files in the \texttt{PATH} environment variable, so you don’t need to write the full path.
+\end{itemize}
+
+With those functions, we can use the command more wisely. : )
+
+\end{solution}
+
+%/ question5
+\question
+Now write a program that uses wait() to wait for the child process to finish in the parent. What does wait() return? What happens if you use wait() in the child?
+\begin{solution}
+
+First Example will show the parent process with wait() function, waiting for child process.
+
+\lstinputlisting[label=code-q5-1.c, caption=q5-1.c]{q5-1.c}
+
+Its execution results are as follows:
+
+\begin{lstlisting}[language=bash]
+$  cc q5_1.c
+$  ./a.out  
+Parent process (PID: 27404) is waiting for child process (PID: 27405) to finish.
+Child process (PID: 27405) is running.
+Child process (PID: 27405) is done.
+wait the child process PID: 27405
+Child process exited with wait(&status) returned: -1
+Parent process (PID: 27404) is done. : )
+\end{lstlisting}
+As we can see the first example has printed out the return value waiting for child process (on the line 6). It actually return the Pid from the child process. After that it will return the -1 as the child process is finished (on the line 7).
+
+Second Example will show the child process with wait() function, waiting for child's child process (not exist).
+\lstinputlisting[label=code-q5-2.c, caption=q5-2.c]{q5-2.c}
+
+Its execution results are as follows:
+
+\begin{lstlisting}[language=bash]
+$  cc q5_2.c
+$  ./a.out  
+Child process is running
+wait(&status): -1
+No more child process here.
+\end{lstlisting}
+
+As we can see in lines 12-19, the child segment is designed to wait for its child process to finish. However, since there are no child processes created after the child process, the \texttt{wait(\&status)} function will return -1, indicating that there are no child processes left to wait for.
+
+\end{solution}
+
+%/ question6
+\question
+Write a slight modification of the previous program, this time using waitpid() instead of wait(). When would waitpid() be useful?
+
+\begin{solution}
+\lstinputlisting[label=code-q6.c, caption=q6.c]{q6.c}
+
+Its execution results are as follows:
+
+\begin{lstlisting}[language=bash]
+$  cc q6.c
+$  ./a.out  
+Child process is running. PID=36153
+Parent process is running. PID=36149
+waitpid() returned: 36153
+\end{lstlisting}
+
+The getpid() function will be useful for identifying a specific process. If we want to know the process ID of the currently running process, we can call getpid(), which returns its own process ID. This can help in debugging or when we need to manage processes, as we can keep track of which process is executing certain tasks. For example, if a parent process needs to wait for a particular child process, it can use getpid() to know its own ID and ensure it's managing the right child process effectively.
+
+\end{solution}
+
+%/ question7
+\question
+Write a program that creates a child process, and then in the child closes standard output (STDOUT FILENO). What happens if the child calls printf() to print some output after closing the descriptor?\begin{solution}
+
+\lstinputlisting[label=code-q7.c, caption=q7.c]{q7.c}
+
+Its execution results are as follows:
+
+\begin{lstlisting}[language=bash]
+$  cc q7.c
+$  ./a.out  
+Child process has finished. :)
+\end{lstlisting}
+
+In the child process (when rc == 0), nothing will be printed out after closing the standard output until the process finishes and control switches back to the parent process.(when rc == 1)
+
+\end{solution}
+
+%/ question8
+\question
+Write a program that creates two children, and connects the standard output of one to the standard input of the other, using the pipe() system call.
+\begin{solution}
+\lstinputlisting[label=code-q8.c, caption=q8.c]{q8.c}
+
+Its execution results are as follows:
+
+\begin{lstlisting}[language=bash]
+$  cc q8.c
+$  ./a.out  
+Child 2 received: Hello from child 1  
+\end{lstlisting}
+
+In the child process (when rc1 == 0), it closes the read end of the pipe (pipeEnd[0]) to ensure it only writes. It then prepares a message, "Hello from child 1", and writes this message to the write end of the pipe (pipeEnd[1]). After writing, it closes the write end of the pipe and exits.
+
+A second child process is created with another fork() call (rc2). If the fork fails, an error message is printed.
+In the second child process, it closes the write end of the pipe (pipeEnd[1]) to ensure it only reads. It then declares a buffer to hold the incoming message and reads from the read end of the pipe (pipeEnd[0]). After successfully reading the message, it prints the received message to the console and closes the read end before exiting.
+
+After all the process ended, close the writing and reading ends. : )
+
+\end{solution}
+
+\end{questions}
+
+
+\end{document}
