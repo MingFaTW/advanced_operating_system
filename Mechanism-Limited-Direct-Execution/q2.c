@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 
 #define iterationsForSystemCall 100000
-#define stringSize 17  
+#define stringSize 16
 #define toNarrowSeconds 1000000000
 
 long getTimeInterval(struct timespec start, struct timespec end) {
@@ -17,20 +17,28 @@ void measure_time_context_switch() {
     int pipe_fd[2];
     pipe(pipe_fd);
 
-    struct timespec start, end;
+    struct timespec start, end, readStart, readEnd, writeStart, writeEnd;
     int pid = fork();
     if (pid < 0) {
         perror("fork failed");
         exit(1);
     }
     
-    char dataForParent[stringSize] = "mingfaisgoodgood"; 
+    char dataForParent[stringSize] = "mingfaisgoodman"; 
     char dataForChild[stringSize];  
-    
+    long readAndWriteTime = 0;
+
     if (pid == 0) {
         for (int i = 0; i < iterationsForSystemCall; i++) {
+            clock_gettime(CLOCK_MONOTONIC, &readStart);  
             read(pipe_fd[0], dataForChild, stringSize); 
+            clock_gettime(CLOCK_MONOTONIC, &readEnd);  
+            
+            clock_gettime(CLOCK_MONOTONIC, &writeStart);  
             write(pipe_fd[1], dataForChild, stringSize); 
+            clock_gettime(CLOCK_MONOTONIC, &writeEnd);  
+
+            readAndWriteTime += getTimeInterval(readStart, readEnd) + getTimeInterval(writeStart, writeEnd);
         }
         close(pipe_fd[0]);
         close(pipe_fd[1]);
@@ -47,7 +55,8 @@ void measure_time_context_switch() {
         close(pipe_fd[0]);
         close(pipe_fd[1]);
         
-        printf("Context switch average time: %ld ns\n", getTimeInterval(start, end) / (iterationsForSystemCall * 2)); 
+        long totalContextSwitchTime = getTimeInterval(start, end) - readAndWriteTime;
+        printf("Context switch average time: %ld ns\n", totalContextSwitchTime / (iterationsForSystemCall * 2)); 
     }
 }
 
