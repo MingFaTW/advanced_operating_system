@@ -154,22 +154,27 @@ Its execution results are as follows:
 \begin{lstlisting}[language=bash]
 $ cc q2.c
 $ ./a.out
-Context switch average time: 2425 ns
+(base) limingfa@MacBook-Pro Mechanism-Limited-Direct-Execution % ./a.out
+Read&Write average time: 1893 ns
+Process average time: 2172 ns
+Context switch average time: 279 ns
 \end{lstlisting}
 
-In lines 16 to 61, I introduce a function named \texttt{measure\_time\_context\_switch}. This function is designed to measure the average time interval for 100,000 iterations of context switching between a parent and child process using pipe-based communication.
+In lines 8 to 10, I defined the constants used in the program. The basic iterations for calculating the average time interval will be 100,000 times, and \texttt{stringSize} for the read and write command will be 16. \texttt{toNarrowSeconds} will be used to convert seconds to nanoseconds for more accurate time interval calculations.
 
-In lines 17 to 18, a pipeline is set up using \texttt{pipe(pipe\_fd)}. In line 20, I declare six \texttt{struct\_timespec} variables: \texttt{start}, \texttt{end}, \texttt{readStart}, \texttt{readEnd}, \texttt{writeStart}, and \texttt{writeEnd}, to measure the time intervals. In line 21, the \texttt{fork\(\)} function is called to create a child process, storing the PID in \texttt{pid}.
+In line 12, I declared two global variables named \texttt{averageReadWriteTime} and \texttt{averageProcessTime} to store the average times for read/write operations and the process for parent-child communication, respectively.
 
-In lines 27 to 28, two arrays, \texttt{dataForParent} and \texttt{dataForChild}, are declared for use by the parent and child processes, respectively.
+In lines 14 to 33, I declared a function called \texttt{measure\_time\_readAndWrite}. This function is designed to measure the time interval of the read and write commands using \texttt{clock\_gettime()}. In lines 15 and 16, I declared the \texttt{pipe\_fd} array for calculating the time interval. In lines 18 and 19, I declared two variables, \texttt{pipeRead} and \texttt{pipeWrite}, to pass data through the pipe and measure the time for read and write commands. In line 20, I declared a variable called \texttt{readAndWriteTime} to store the time interval of the read and write operations. Lines 21 to 26 calculate the time interval using \texttt{clock\_gettime}. Lines 29 and 30 close the pipe, and in line 31, \texttt{averageReadWriteTime} is calculated by dividing the total time by the number of iterations.
 
-In lines 31 to 46, the child process repeatedly reads and writes from the pipe for 100,000 iterations. The process reads data from the pipe via \texttt{read(pipe\_fd[0], dataForChild, stringSize)} and writes it back using \texttt{write(pipe\_fd[1], dataForChild, stringSize)}. In lines 33 and 35, I use \texttt{clock\_gettime} to get the time cost of the \texttt{read} command. Similarly, in lines 37 and 39, \texttt{clock\_gettime} is used to measure the time cost for the \texttt{write} command.
+In lines 36 to 69, I declared a function called \texttt{measure\_time\_context\_switch}. This function is designed to measure the average time interval for 100,000 iterations of context switching between a parent and child process using pipe-based communication.
 
-In lines 46 to 60, the parent process calculates the total context switch time interval by reading and writing through the pipe. In line 54, the \texttt{wait(NULL)} function ensures that the child process finishes execution before proceeding. Lines 55 and 56 are used to close the pipeline. In line 58, a variable called \texttt{totalContextSwitchTime} is declared, which stores the context switch time by subtracting the \texttt{readAndWriteTime} from the total time.
+In lines 36 and 37, a pipe is set up using \texttt{pipe(pipe\_fd)}. In line 38, I declared two \texttt{struct timespec} variables: \texttt{start} and \texttt{end} to measure the time intervals. In line 39, the \texttt{fork()} function is called to create a child process. In the child process (when \texttt{pid == 0}), the pipe is used to read and write data for 100,000 iterations, using the \texttt{read()} and \texttt{write()} system calls. The time for each operation is recorded using \texttt{clock\_gettime()}. In the parent process, the total time for both the read and write operations, including context switching, is measured using \texttt{clock\_gettime()}.
 
-Finally, in line 59, the average time for each context switch is printed. Since there are two processes involved (parent and child), the total time interval is divided by twice the number of iterations to get the average context switch time per iteration.
+In lines 52 to 66, the parent process calculates the total time interval for reading, writing, and context switching through the pipe. In line 60, the \texttt{wait(NULL)} function ensures that the child process finishes before proceeding. Lines 61 and 62 close the pipe. In line 63, the variable \texttt{ProcessTime} is declared to store the total time, including both the parent and child process times. In lines 64 and 65, the process time is divided by \texttt{iterationsForSystemCall * 2} for more accurate results, and the process average time is printed in line 65.
 
-In the \texttt{main} function, \texttt{measure\_time\_context\_switch} is called to display the output value.
+In the \texttt{main} function, \texttt{measure\_time\_readAndWrite} and \texttt{measure\_time\_context\_switch} are called to display the output values. Finally, in line 72, the result of the average context switch time is printed. It is calculated by subtracting \texttt{averageReadWriteTime} from \texttt{averageProcessTime}.
+
+
 
 
 \end{solution}
